@@ -67,10 +67,12 @@ public class GestioUsuaris  extends JFrame {
         setFont(new Font("Arial", Font.PLAIN, 12));
         
         partEsquerra();
+        parDreta();
         
         gbc.fill = GridBagConstraints.HORIZONTAL;
         grid(0, 0, 1, 1, 1, 1);
         add(gridEsquerra);
+        add(gridDret);
     }
 
     private void partEsquerra(){
@@ -82,7 +84,7 @@ public class GestioUsuaris  extends JFrame {
         textUsuaris.setBorder(BorderFactory.createLineBorder(textUsuaris.getBackground(), 5));
         
         gbc = new GridBagConstraints();
-        
+        borderElementsGrid(10, 10, 10, 10);
       
         usuaris.add(new Usuari(1, "Usuari 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari", "password"));
         usuaris.add(new Usuari(2, "Usuari 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari", "password"));
@@ -91,23 +93,33 @@ public class GestioUsuaris  extends JFrame {
         
 
         definirTaula();
-
+        
         nouUsuari = new JButton("Nou");
         esborrarUsuari = new JButton("Esborrar");
         editarUsuari = new JButton("Editar");
         
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        grid(0, 0, 1, 1, 1, 40);
+        borderElementsGrid(20, 10, 10, 10);
+        grid(0, 0, 1, 1, 1, 1);
         gridEsquerra.add(textUsuaris, gbc);
         grid(0, 1, 1.0, 1.0, 3, 1);
         gridEsquerra.add(new JScrollPane(taula), gbc);
+        borderElementsGrid(10, 30, 10, 20);
         grid(0, 2, 1, 1, 1, 1);
         gridEsquerra.add(nouUsuari, gbc);
+        borderElementsGrid(10, 20, 10, 20);
         grid(1, 2, 1, 1, 1, 1);
         gridEsquerra.add(esborrarUsuari, gbc);
+        borderElementsGrid(10, 20, 10, 30);
         grid(2, 2, 1, 1, 1, 1);
         gridEsquerra.add(editarUsuari, gbc);
+        borderElementsGrid(10, 10, 10, 10);
         
+    }
+
+    private void parDreta(){
+        gridDret = new JPanel();
+        gridDret.setLayout(new GridBagLayout());
     }
     
     private void definirTaula(){
@@ -123,7 +135,6 @@ public class GestioUsuaris  extends JFrame {
         
         for (int i = 0; i < columnesTaula.size(); i++){
             tUsuaris.addColumn(columnesTaula.get(i));
-            System.out.println(columnesTaula.get(i));
         }
         
         for (Usuari usus : usuaris) {
@@ -131,7 +142,7 @@ public class GestioUsuaris  extends JFrame {
             fila[0] = usus.getNom();
             fila[1] = usus.getCognom1();
             fila[2] = usus.getCognom2();
-            fila[3] = usus.getDataNaixement();
+            fila[3] = usus.getDataNaixementFormatada();
             fila[4] = usus.getLogin();
             fila[5] = usus.getPasswrdHash();
 
@@ -151,5 +162,8 @@ public class GestioUsuaris  extends JFrame {
         gbc.ipady = ipady;
     }
     
+    private void borderElementsGrid(int top, int left, int bottom, int right) {
+        gbc.insets = new Insets(top, left, bottom, right);
+    }
     
 }
