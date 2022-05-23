@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
+import org.milaifontanals.interficie.CPSingleton;
 import org.milaifontanals.interficie.GestioProjectesException;
 import org.milaifontanals.interficie.IGestioProjectes;
 
@@ -52,16 +53,15 @@ public class Proves {
         }
 
         IGestioProjectes cp = null;
+        
         try {
-            System.out.println("Intentem crear capa de persistència");
-            Class compo = Class.forName(nomCapa);
-            cp = (IGestioProjectes) compo.newInstance();
-            
-            
-            
+            System.out.println("APLICACIÓ VIA FACTORIA");
+            // Aquesta aplicació està preparada per obtenir un objecte de la capa invocant el constructor
+            // sense paràmetres
+            cp = CPSingleton.getGestorProjectes(nomCapa);
             System.out.println("Capa de persistència creada");
         } catch (Exception ex) {
-            System.out.println("Problema en crear capa de persistència");
+            System.out.println("");
             infoError(ex);
             return;
         }
