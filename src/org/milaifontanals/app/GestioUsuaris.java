@@ -90,11 +90,7 @@ public class GestioUsuaris extends JFrame {
     
     private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     
-    public enum Estat{
-        VIEW,
-        MODIFICACIO,
-        ALTA
-    }
+    private Estat estat = Estat.VIEW;
     
     public GestioUsuaris(String titol) {
         setTitle(titol);
@@ -116,6 +112,8 @@ public class GestioUsuaris extends JFrame {
         partEsquerra();
         omplirFormulari();
         parDreta();
+        
+        canviEstat(Estat.VIEW);
         
         gbc.fill = GridBagConstraints.BOTH;
         grid(0, 0, 1, 1, 1, 1);
@@ -146,6 +144,10 @@ public class GestioUsuaris extends JFrame {
                 if (e.getValueIsAdjusting()) // si hi ha canvi de seleccio en el JTable
                 {
                     omplirFormulari();
+                    if (taulaUsuaris.getSelectedRow() > -1){
+                        canviEstat(Estat.MODIFICACIO_USUARI);
+                    }
+                    
                 }
             }
         });
@@ -335,15 +337,17 @@ public class GestioUsuaris extends JFrame {
         taulaProjectesAssignats.setRowSelectionAllowed(true);
         taulaProjectesAssignats.setColumnSelectionAllowed(false);
         taulaProjectesAssignats.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        /*taulaUsuaris.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        taulaProjectesAssignats.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (e.getValueIsAdjusting()) // si hi ha canvi de seleccio en el JTable
                 {
-                    //Assignar, Dessasignar, Cancelar
+                    if (taulaUsuaris.getSelectedRow() > -1){
+                        canviEstat(Estat.MODIFICACIO_PROJECTE);
+                    }
                 }
             }
-        });*/
+        });
         
         buttonAssignarProjecte = new JButton("Assignar");
         buttonDessasignarProjecte = new JButton("Dessasignar");
@@ -419,6 +423,149 @@ public class GestioUsuaris extends JFrame {
         }
     }
     
+    
+    
+    
+
+    private void omplirFormulari() {
+        int fila = taulaUsuaris.getSelectedRow();
+        
+        if (fila > -1) {
+            textUsuariNom.setText((String)taulaUsuaris.getValueAt(fila, 0));
+            textUsuariCognom1.setText((String)taulaUsuaris.getValueAt(fila, 1));
+            textUsuariCognom2.setText((String)taulaUsuaris.getValueAt(fila, 2));
+            textUsuariDataNaix.setText((String)taulaUsuaris.getValueAt(fila, 3));
+            textUsuariLogin.setText((String)taulaUsuaris.getValueAt(fila, 4));        
+            textUsuariPassword.setText((String)taulaUsuaris.getValueAt(fila, 5));         
+        }
+    }
+    
+    private void netejarFormulari() {
+        int fila = taulaUsuaris.getSelectedRow();
+        
+        if (fila == -1) {
+            textUsuariNom.setText(null);
+            textUsuariCognom1.setText(null);
+            textUsuariCognom2.setText(null);
+            textUsuariDataNaix.setText(null);
+            textUsuariLogin.setText(null);        
+            textUsuariPassword.setText(null);         
+        }
+    }
+    
+    class GestioBotons implements ActionListener { 
+        @Override public void actionPerformed(ActionEvent e) { 
+            String quinBotoPremut = e.getActionCommand(); 
+            JButton botoPremut = (JButton) e.getSource();
+            
+            //botoPremut.setEnabled(false);
+            
+            if (botoPremut.equals(buttonNouUsuari)) {
+                if (taulaUsuaris.getSelectedRow() > -1) {
+                    taulaUsuaris.clearSelection();
+                    netejarFormulari();
+                    canviEstat(Estat.ALTA);
+                }
+                
+            } else if (botoPremut.equals(buttonEsborrarUsuari)) {
+                if (taulaUsuaris.getSelectedRow() > -1) {
+                    canviEstat(Estat.VIEW);
+                }
+            } else if (botoPremut.equals(buttonEditarUsuari)) {
+                if (taulaUsuaris.getSelectedRow() > -1) {
+                    canviEstat(Estat.MODIFICACIO_USUARI);
+                }
+            } else if (botoPremut.equals(buttonGuardarUsuari)) {
+                if (taulaUsuaris.getSelectedRow() > -1) {
+                    canviEstat(Estat.VIEW);
+                }
+            } else if (botoPremut.equals(buttonCancelarUsuari)) {
+                omplirFormulari();
+                if (taulaUsuaris.getSelectedRow() > -1) {
+                    taulaUsuaris.clearSelection();
+                    canviEstat(Estat.VIEW);
+                }
+            } else if (botoPremut.equals(buttonAssignarProjecte)) {
+                if (taulaProjectesAssignats.getSelectedRow() > -1) {
+                    canviEstat(Estat.MODIFICACIO_PROJECTE);
+                    novaFinestra();
+                }
+            } else if (botoPremut.equals(buttonDessasignarProjecte)) {
+                if (taulaProjectesAssignats.getSelectedRow() > -1) {
+                    canviEstat(Estat.MODIFICACIO_PROJECTE);
+                }
+            } else if (botoPremut.equals(buttonCancelarProjecte)) {
+                if (taulaProjectesAssignats.getSelectedRow() > -1) {
+                    taulaProjectesAssignats.clearSelection();
+                    canviEstat(Estat.MODIFICACIO_USUARI);
+                } 
+            }
+            
+            
+        }
+    
+    }
+    
+    
+    private void canviEstat(Estat estatNou)
+    {
+        estat = estatNou;
+        if (estat == Estat.VIEW)
+        {
+            buttonNouUsuari.setEnabled(true);
+            buttonEsborrarUsuari.setEnabled(false);
+            buttonEditarUsuari.setEnabled(false);
+            
+            buttonGuardarUsuari.setEnabled(false);
+            buttonCancelarUsuari.setEnabled(false);
+            
+            buttonAssignarProjecte.setEnabled(false);
+            buttonDessasignarProjecte.setEnabled(false);
+            buttonCancelarProjecte.setEnabled(false);
+        } 
+        else if (estat == Estat.MODIFICACIO_USUARI)
+        {
+            buttonNouUsuari.setEnabled(false);
+            buttonEsborrarUsuari.setEnabled(true);
+            buttonEditarUsuari.setEnabled(true);
+            
+            buttonGuardarUsuari.setEnabled(true);
+            buttonCancelarUsuari.setEnabled(true);
+            
+            buttonAssignarProjecte.setEnabled(true);
+            buttonDessasignarProjecte.setEnabled(false);
+            buttonCancelarProjecte.setEnabled(false);
+        }
+        else if (estat == Estat.MODIFICACIO_PROJECTE)
+        {
+            buttonNouUsuari.setEnabled(false);
+            buttonEsborrarUsuari.setEnabled(false);
+            buttonEditarUsuari.setEnabled(false);
+            
+            buttonGuardarUsuari.setEnabled(false);
+            buttonCancelarUsuari.setEnabled(false);
+            
+            buttonAssignarProjecte.setEnabled(true);
+            buttonDessasignarProjecte.setEnabled(true);
+            buttonCancelarProjecte.setEnabled(true);
+        }
+        else if (estat == Estat.ALTA)
+        {
+            netejarFormulari();
+            buttonNouUsuari.setEnabled(true);
+            buttonEsborrarUsuari.setEnabled(false);
+            buttonEditarUsuari.setEnabled(false);
+            
+            buttonGuardarUsuari.setEnabled(true);
+            buttonCancelarUsuari.setEnabled(true);
+            
+            buttonAssignarProjecte.setEnabled(true);
+            buttonDessasignarProjecte.setEnabled(false);
+            buttonCancelarProjecte.setEnabled(true);
+        }
+        
+    }
+    
     private void grid(int gridx, int gridy, double weightx, double weighty, int gridwidth, int ipady) {
         gbc.gridx = gridx;
         gbc.gridy = gridy;
@@ -432,52 +579,5 @@ public class GestioUsuaris extends JFrame {
     private void borderElementsGrid(int top, int left, int bottom, int right) {
         gbc.insets = new Insets(top, left, bottom, right);
     }
-
-    private void omplirFormulari() {
-        int fila = taulaUsuaris.getSelectedRow();
-        
-        System.out.println(fila);
-        
-        if (fila > -1) {
-            textUsuariNom.setText((String)taulaUsuaris.getValueAt(fila, 0));
-            textUsuariCognom1.setText((String)taulaUsuaris.getValueAt(fila, 1));
-            textUsuariCognom2.setText((String)taulaUsuaris.getValueAt(fila, 2));
-            textUsuariDataNaix.setText((String)taulaUsuaris.getValueAt(fila, 3));
-            textUsuariLogin.setText((String)taulaUsuaris.getValueAt(fila, 4));        
-            textUsuariPassword.setText((String)taulaUsuaris.getValueAt(fila, 5));         
-        }
-    }
     
-    class GestioBotons implements ActionListener { 
-        @Override public void actionPerformed(ActionEvent e) { 
-            String quinBotoPremut = e.getActionCommand(); 
-            JButton botoPremut = (JButton) e.getSource();
-            if (botoPremut.equals(buttonNouUsuari)) {
-                if (taulaUsuaris.getSelectedRow() > -1) {
-                    taulaUsuaris.clearSelection();
-                }
-            } else if (botoPremut.equals(buttonEsborrarUsuari)) {
-                
-            } else if (botoPremut.equals(buttonEditarUsuari)) {
-                
-            } else if (botoPremut.equals(buttonGuardarUsuari)) {
-                
-            } else if (botoPremut.equals(buttonCancelarUsuari)) {
-                omplirFormulari();
-            } else if (botoPremut.equals(buttonAssignarProjecte)) {
-                if (taulaProjectesAssignats.getSelectedRow() > -1) {
-                    novaFinestra();
-                }
-            } else if (botoPremut.equals(buttonDessasignarProjecte)) {
-                
-            } else if (botoPremut.equals(buttonCancelarProjecte)) {
-                if (taulaProjectesAssignats.getSelectedRow() > -1) {
-                    taulaProjectesAssignats.clearSelection();
-                } 
-            }
-            
-            
-        }
-    
-    }
 }
