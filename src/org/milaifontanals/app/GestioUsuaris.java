@@ -223,6 +223,14 @@ public class GestioUsuaris extends JFrame {
                 return false; // fem que no sigui editable
             }
         };
+  
+        //------------
+        usuaris.add(new Usuari(1, "Usuari 1", "Cognom 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari1", "password1"));
+        usuaris.add(new Usuari(2, "Usuari 2", "Cognom 2", new Date(2000-1900,1-1,1), "usuari2", "password2"));
+        usuaris.add(new Usuari(3, "Usuari 3", "Cognom 3", new Date(2000-1900,1-1,1), "usuari3", "password3"));
+        usuaris.add(new Usuari(4, "Usuari 4", "Cognom 4", new Date(2000-1900,1-1,1), "usuari4", "password4"));
+        //---------------
+             
 
         tUsuaris = new DefaultTableModel();//columnNames, usuaris.size());
         columnesTaulaUsuaris.add("Nom");
