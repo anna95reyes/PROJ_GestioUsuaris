@@ -8,10 +8,15 @@ package org.milaifontanals.app;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Properties;
 import org.milaifontanals.interficie.CPSingleton;
 import org.milaifontanals.interficie.GestioProjectesException;
 import org.milaifontanals.interficie.IGestioProjectes;
+import org.milaifontanals.model.Projecte;
+import org.milaifontanals.model.Usuari;
 
 /**
  *
@@ -66,6 +71,106 @@ public class Proves {
             return;
         }
         
+        
+        try {
+            List<Usuari> usuaris = new ArrayList();
+            usuaris = cp.getLlistaUsuaris();
+            for (Usuari usu: usuaris) {
+                System.out.println("USUARI: "+usu.getNom());
+            }
+        } catch (Exception ex){
+            
+        }
+        
+        try {
+            System.out.println("ExisteixUsuari: " + cp.existeixUsuari(1));
+        } catch (Exception ex){
+            
+        }
+        
+        try {
+            System.out.println("ExisteixProjecte: " + cp.existeixProjecte(1));
+        } catch (Exception ex){
+            
+        }
+        
+        
+        try {
+            System.out.println("Usuari: " + cp.getUsuari(1).getNom());
+        } catch (Exception ex){
+            
+        }
+        
+        
+        
+//        Usuari nouUsuari = new Usuari(14, "Prova", "Prova", "Prova", new Date(2000-1900, 5-1, 14), "login prova", "password prova");
+//        try {
+//            System.out.println("ADD Usuari");
+//            cp.addUsuari(nouUsuari);
+//            cp.commit();
+//        } catch (Exception ex){
+//            
+//        }
+        
+//        try {
+//            System.out.println("UPDATE Usuari");
+//            cp.modificarUsuari(new Usuari(14, "Prova 2", "Prova 2", "Prova 2", new Date(2000-1900, 5-1, 20), "login prova 2", "password prova 2"));
+//            cp.commit();
+//        } catch (Exception ex){
+//            
+//        }
+        
+//        try {
+//            System.out.println("DELETE Usuari");
+//            cp.deleteUsuari(14);
+//            cp.commit();
+//        } catch (Exception ex){
+//            
+//        }
+        
+        
+        try {
+            List<Projecte> projectes = new ArrayList();
+            projectes = cp.getLlistaProjectes();
+            for (Projecte proj: projectes) {
+                System.out.println("PROJECTE: "+proj.getNom());
+            }
+        } catch (Exception ex){
+            
+        }
+        
+        try {
+            System.out.println("Projecte: " + cp.getProjecte(1).getNom());
+        } catch (Exception ex){
+            
+        }
+        
+        try {
+            System.out.println("Rol: " + cp.getRol(1).getNom());
+        } catch (Exception ex){
+            
+        }
+        
+        try {
+            Usuari usuari = cp.getUsuari(2);
+            Projecte projecte = cp.getProjecte(3);
+            System.out.println("Assignar projecte");
+            cp.assignarProjecte(usuari, projecte);
+            cp.commit();
+        } catch (Exception ex){
+            System.out.println("ERROR ASSIGNAR PROJECTE: " + ex.getMessage());
+        }
+        
+//        try {
+//            Usuari usuari = cp.getUsuari(1);
+//            Projecte projecte = cp.getProjecte(1);
+//            System.out.println("Dessasignar projecte");
+//            cp.desassignarProjecte(usuari, projecte);
+//            cp.commit();
+//        } catch (Exception ex){
+//            System.out.println("ERROR DESASSIGNAR PROJECTE: " + ex.getMessage());
+//        }
+        
         try {
             cp.closeCapa();
             System.out.println("Capa tancada");
@@ -73,6 +178,7 @@ public class Proves {
             System.out.println("Error en tancar la capa de persistència");
             infoError(ex);
         }
+        
     }
     
     private static void infoError(Throwable aux) {

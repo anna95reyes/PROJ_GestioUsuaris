@@ -16,11 +16,17 @@ import java.awt.Insets;
 import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -39,6 +45,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import org.milaifontanals.interficie.CPSingleton;
+import org.milaifontanals.interficie.GestioProjectesException;
+import org.milaifontanals.interficie.IGestioProjectes;
 import org.milaifontanals.model.Projecte;
 import org.milaifontanals.model.Usuari;
 
@@ -90,9 +99,19 @@ public class GestioUsuaris extends JFrame {
     
     private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     
+    private IGestioProjectes cp;
+    
+    public enum Estat {
+        VIEW,
+        MODIFICACIO_USUARI,
+        MODIFICACIO_PROJECTE,
+        ALTA
+    }
+    
     private Estat estat = Estat.VIEW;
     
-    public GestioUsuaris(String titol) {
+    public GestioUsuaris(String titol, IGestioProjectes interficie) {
+        cp = interficie;
         setTitle(titol);
         setLayout(new GridBagLayout());
         entornGrafic();
@@ -103,6 +122,8 @@ public class GestioUsuaris extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
     }
+    
+    
     
     private void entornGrafic(){
         setFont(new Font("Arial", Font.PLAIN, 12));
@@ -202,14 +223,7 @@ public class GestioUsuaris extends JFrame {
                 return false; // fem que no sigui editable
             }
         };
-  
-        //------------
-        usuaris.add(new Usuari(1, "Usuari 1", "Cognom 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari1", "password1"));
-        usuaris.add(new Usuari(2, "Usuari 2", "Cognom 2", new Date(2000-1900,1-1,1), "usuari2", "password2"));
-        usuaris.add(new Usuari(3, "Usuari 3", "Cognom 3", new Date(2000-1900,1-1,1), "usuari3", "password3"));
-        usuaris.add(new Usuari(4, "Usuari 4", "Cognom 4", new Date(2000-1900,1-1,1), "usuari4", "password4"));
-        //---------------
-        
+
         tUsuaris = new DefaultTableModel();//columnNames, usuaris.size());
         columnesTaulaUsuaris.add("Nom");
         columnesTaulaUsuaris.add("1r. Cognom");
@@ -222,16 +236,20 @@ public class GestioUsuaris extends JFrame {
             tUsuaris.addColumn(columnesTaulaUsuaris.get(i));
         }
         
-        for (Usuari usus : usuaris) {
-            Object[] fila = new Object[6];
-            fila[0] = usus.getNom();
-            fila[1] = usus.getCognom1();
-            fila[2] = usus.getCognom2();
-            fila[3] = usus.getDataNaixementFormatada();
-            fila[4] = usus.getLogin();
-            fila[5] = usus.getPasswrdHash();
-
-            tUsuaris.addRow(fila);
+        try {
+            for (Usuari usus : cp.getLlistaUsuaris()) {
+                Object[] fila = new Object[6];
+                fila[0] = usus.getNom();
+                fila[1] = usus.getCognom1();
+                fila[2] = usus.getCognom2();
+                fila[3] = usus.getDataNaixementFormatada();
+                fila[4] = usus.getLogin();
+                fila[5] = usus.getPasswrdHash();
+                
+                tUsuaris.addRow(fila);
+            }
+        } catch (GestioProjectesException ex) {
+            System.out.println("Error a l'hora de llegir la llista d'usuaris: " + ex.getMessage());
         }
         
         taulaUsuaris.setModel(tUsuaris);
@@ -454,7 +472,8 @@ public class GestioUsuaris extends JFrame {
     }
     
     class GestioBotons implements ActionListener { 
-        @Override public void actionPerformed(ActionEvent e) { 
+        @Override
+        public void actionPerformed(ActionEvent e) { 
             String quinBotoPremut = e.getActionCommand(); 
             JButton botoPremut = (JButton) e.getSource();
             
@@ -463,9 +482,9 @@ public class GestioUsuaris extends JFrame {
             if (botoPremut.equals(buttonNouUsuari)) {
                 if (taulaUsuaris.getSelectedRow() > -1) {
                     taulaUsuaris.clearSelection();
-                    netejarFormulari();
-                    canviEstat(Estat.ALTA);
                 }
+                netejarFormulari();
+                canviEstat(Estat.ALTA);
                 
             } else if (botoPremut.equals(buttonEsborrarUsuari)) {
                 if (taulaUsuaris.getSelectedRow() > -1) {
@@ -477,19 +496,20 @@ public class GestioUsuaris extends JFrame {
                 }
             } else if (botoPremut.equals(buttonGuardarUsuari)) {
                 if (taulaUsuaris.getSelectedRow() > -1) {
+                    taulaUsuaris.clearSelection();
                     canviEstat(Estat.VIEW);
                 }
+                netejarFormulari();
             } else if (botoPremut.equals(buttonCancelarUsuari)) {
                 omplirFormulari();
                 if (taulaUsuaris.getSelectedRow() > -1) {
                     taulaUsuaris.clearSelection();
                     canviEstat(Estat.VIEW);
                 }
+                netejarFormulari();
             } else if (botoPremut.equals(buttonAssignarProjecte)) {
-                if (taulaProjectesAssignats.getSelectedRow() > -1) {
-                    canviEstat(Estat.MODIFICACIO_PROJECTE);
-                    novaFinestra();
-                }
+                canviEstat(Estat.MODIFICACIO_PROJECTE);
+                novaFinestra();
             } else if (botoPremut.equals(buttonDessasignarProjecte)) {
                 if (taulaProjectesAssignats.getSelectedRow() > -1) {
                     canviEstat(Estat.MODIFICACIO_PROJECTE);
@@ -497,8 +517,8 @@ public class GestioUsuaris extends JFrame {
             } else if (botoPremut.equals(buttonCancelarProjecte)) {
                 if (taulaProjectesAssignats.getSelectedRow() > -1) {
                     taulaProjectesAssignats.clearSelection();
-                    canviEstat(Estat.MODIFICACIO_USUARI);
                 } 
+                canviEstat(Estat.MODIFICACIO_USUARI);
             }
             
             
@@ -525,7 +545,7 @@ public class GestioUsuaris extends JFrame {
         } 
         else if (estat == Estat.MODIFICACIO_USUARI)
         {
-            buttonNouUsuari.setEnabled(false);
+            buttonNouUsuari.setEnabled(true);
             buttonEsborrarUsuari.setEnabled(true);
             buttonEditarUsuari.setEnabled(true);
             
@@ -579,5 +599,6 @@ public class GestioUsuaris extends JFrame {
     private void borderElementsGrid(int top, int left, int bottom, int right) {
         gbc.insets = new Insets(top, left, bottom, right);
     }
+    
     
 }
