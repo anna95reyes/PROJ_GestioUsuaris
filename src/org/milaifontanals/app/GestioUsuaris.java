@@ -48,6 +48,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
+import org.hibernate.type.ObjectType;
 import org.milaifontanals.interficie.CPSingleton;
 import org.milaifontanals.interficie.GestioProjectesException;
 import org.milaifontanals.interficie.IGestioProjectes;
@@ -91,8 +92,6 @@ public class GestioUsuaris extends JFrame {
     private JTable taulaProjectesAssignats;
     private DefaultTableModel tProjectesAssignats;
     
-    //private List<Usuari> usuaris = new ArrayList();
-    //private List<Projecte> projectes = new ArrayList();
     private List<String> columnesTaulaUsuaris = new ArrayList();
     private List<String> columnesTaulaProjectes = new ArrayList();
     
@@ -103,7 +102,8 @@ public class GestioUsuaris extends JFrame {
     
     private IGestioProjectes cp;
     
-    private int usuariSeleccionat = 1;
+    private int filaSeleccionada = 0;
+    private int idUsuari = 0;
     
     public enum Estat {
         VIEW,
@@ -180,8 +180,13 @@ public class GestioUsuaris extends JFrame {
             public void valueChanged(ListSelectionEvent e) {
                 if (e.getValueIsAdjusting()) // si hi ha canvi de seleccio en el JTable
                 {
+                    if (taulaUsuaris.getSelectedRow() > -1){
+                        canviEstat(Estat.MODIFICACIO_USUARI);
+                    }
                     omplirFormulari();
-                    usuariSeleccionat = taulaUsuaris.getSelectedRow() + 1;
+                    filaSeleccionada = taulaUsuaris.getSelectedRow();
+                    idUsuari = (int)taulaUsuaris.getValueAt(taulaUsuaris.getSelectedRow(), 0);
+                    
                     netejarTaulaProjectesAssignats();
                     omplirTaulaProjectesAssignats();
                 }
@@ -239,6 +244,7 @@ public class GestioUsuaris extends JFrame {
             }
         };
         tUsuaris = new DefaultTableModel();//columnNames, usuaris.size());
+        columnesTaulaUsuaris.add("Id");
         columnesTaulaUsuaris.add("Nom");
         columnesTaulaUsuaris.add("1r. Cognom");
         columnesTaulaUsuaris.add("2n. Cognom");
@@ -250,24 +256,37 @@ public class GestioUsuaris extends JFrame {
             tUsuaris.addColumn(columnesTaulaUsuaris.get(i));
         }
         
+        omplirTaulaUsuaris();
+        
+        taulaUsuaris.setModel(tUsuaris);
+     
+    }
+    
+    private void omplirTaulaUsuaris() {
         try {
             for (Usuari usus : cp.getLlistaUsuaris()) {
-                Object[] fila = new Object[6];
-                fila[0] = usus.getNom();
-                fila[1] = usus.getCognom1();
-                fila[2] = usus.getCognom2();
-                fila[3] = usus.getDataNaixementFormatada();
-                fila[4] = usus.getLogin();
-                fila[5] = usus.getPasswrdHash();
+                Object[] fila = new Object[7];
+                fila[0] = usus.getId();
+                fila[1] = usus.getNom();
+                fila[2] = usus.getCognom1();
+                fila[3] = usus.getCognom2();
+                fila[4] = usus.getDataNaixementFormatada();
+                fila[5] = usus.getLogin();
+                fila[6] = usus.getPasswrdHash();
                 
                 tUsuaris.addRow(fila);
             }
         } catch (GestioProjectesException ex) {
-            System.out.println("Error a l'hora de llegir la llista d'usuaris: " + ex.getMessage());
+            System.out.println("Problema en omplir la taula d'usuaris: " + ex.getMessage());
         }
-        
-        taulaUsuaris.setModel(tUsuaris);
-     
+    }
+
+    private void netejarTaulaUsuaris() {
+        if (tUsuaris.getRowCount() > 0) {
+            for (int i = tUsuaris.getRowCount() - 1; i >=0 ; i--) {
+                tUsuaris.removeRow(i);
+            }
+        }
     }
     
     private void formulariUsuari(){
@@ -397,7 +416,6 @@ public class GestioUsuaris extends JFrame {
         grid(0, 8, 1, 1, 3, 1);
         panelDret.add(new JScrollPane(taulaProjectesAssignats), gbc);
         
-        //panelDret.add(new JScrollPane(taulaProjectesAssignats), gbc);
         borderElementsGrid(10, 10, 10, 10);
         grid(0, 9, 1, 1, 1, 1);
         panelDret.add(buttonAssignarProjecte, gbc);
@@ -419,6 +437,7 @@ public class GestioUsuaris extends JFrame {
         };
 
         tProjectesAssignats = new DefaultTableModel();
+        columnesTaulaProjectes.add("Id");
         columnesTaulaProjectes.add("Nom");
         columnesTaulaProjectes.add("Descripcio");
         
@@ -434,17 +453,20 @@ public class GestioUsuaris extends JFrame {
 
     private void omplirTaulaProjectesAssignats() {
         try {
-            List<Projecte> projectes = cp.getLlistaProjectesAssignats(cp.getUsuari(usuariSeleccionat));
-            for (int i = 0; i < projectes.size(); i++) {
-                Object[] fila = new Object[2];
-                fila[0] = projectes.get(i).getNom();
-                fila[1] = projectes.get(i).getDescripcio();
+            if (filaSeleccionada > -1 && idUsuari > 0) {
+                
+                List<Projecte> projectes = cp.getLlistaProjectesAssignats(cp.getUsuari(idUsuari));
+                for (int i = 0; i < projectes.size(); i++) {
+                    Object[] fila = new Object[3];
+                    fila[0] = projectes.get(i).getId();
+                    fila[1] = projectes.get(i).getNom();
+                    fila[2] = projectes.get(i).getDescripcio();
 
-                tProjectesAssignats.addRow(fila);  
+                    tProjectesAssignats.addRow(fila);  
+                }
             }
         } catch (GestioProjectesException ex) {
-            System.out.println("OMPLIR TAULA PROJECTES ASSIGNATS");
-            Logger.getLogger(GestioUsuaris.class.getName()).log(Level.SEVERE, null, ex);
+            System.out.println("Problema en omplir la taula de projectes assignats: "+ ex.getMessage());
         }
     }
 
@@ -458,7 +480,7 @@ public class GestioUsuaris extends JFrame {
     
     private void novaFinestra() {
         try {           
-            AssignarProjectesAUsuari frameAssignarProjectes = new AssignarProjectesAUsuari("Projectes no assignats");
+            AssignarProjectesAUsuari frameAssignarProjectes = new AssignarProjectesAUsuari("Projectes no assignats", cp, idUsuari, tProjectesAssignats);
             setVisible(false);
             frameAssignarProjectes.setLocationRelativeTo(this);
             frameAssignarProjectes.setVisible(true);
@@ -476,13 +498,36 @@ public class GestioUsuaris extends JFrame {
         int fila = taulaUsuaris.getSelectedRow();
         
         if (fila > -1) {
-            textUsuariNom.setText((String)taulaUsuaris.getValueAt(fila, 0));
-            textUsuariCognom1.setText((String)taulaUsuaris.getValueAt(fila, 1));
-            textUsuariCognom2.setText((String)taulaUsuaris.getValueAt(fila, 2));
-            textUsuariDataNaix.setText((String)taulaUsuaris.getValueAt(fila, 3));
-            textUsuariLogin.setText((String)taulaUsuaris.getValueAt(fila, 4));        
-            textUsuariPassword.setText((String)taulaUsuaris.getValueAt(fila, 5));         
+            textUsuariNom.setText((String)taulaUsuaris.getValueAt(fila, 1));
+            textUsuariCognom1.setText((String)taulaUsuaris.getValueAt(fila, 2));
+            textUsuariCognom2.setText((String)taulaUsuaris.getValueAt(fila, 3));
+            textUsuariDataNaix.setText((String)taulaUsuaris.getValueAt(fila, 4));
+            textUsuariLogin.setText((String)taulaUsuaris.getValueAt(fila, 5));        
+            textUsuariPassword.setText((String)taulaUsuaris.getValueAt(fila, 6));         
         }
+    }
+    
+    private Boolean comprobarDadesFormulari() {
+        Date data = dataFormulari(textUsuariDataNaix.getText());
+        String cognom2 = textUsuariCognom2.getText();
+
+        if (textUsuariCognom2.getText().length() < 1){
+            cognom2 = null;
+        } 
+        return Usuari.comprobarDadesObligatories(textUsuariNom.getText()) &&
+               Usuari.comprobarDadesObligatories(textUsuariCognom1.getText()) &&
+               Usuari.comprobarDadesOpcionals(cognom2) &&
+               Usuari.comprobarDataNaixement(data) &&
+               Usuari.comprobarDadesObligatories(textUsuariLogin.getText()) &&
+               Usuari.comprobarDadesObligatories(textUsuariPassword.getText());
+    }
+
+    public Date dataFormulari(String dataFormulari) {
+        int any = Integer.valueOf(dataFormulari.substring(0, 4));
+        int mes = Integer.valueOf(dataFormulari.substring(5, 7));
+        int dia = Integer.valueOf(dataFormulari.substring(8, 10));
+        Date data = new Date(any-1900, mes-1, dia);
+        return data;
     }
     
     private void netejarFormulari() {
@@ -515,22 +560,74 @@ public class GestioUsuaris extends JFrame {
                 
             } else if (botoPremut.equals(buttonEsborrarUsuari)) {
                 if (taulaUsuaris.getSelectedRow() > -1) {
+                    try {
+                        cp.deleteUsuari(idUsuari);
+                        cp.commit();
+                    } catch (GestioProjectesException ex) {
+                        JOptionPane.showMessageDialog(null, "No es pot esborrar aquest usuari perque esta sent utilitzat", 
+                                "Error eliminar usuari", JOptionPane.ERROR_MESSAGE);
+                    }
+                    taulaUsuaris.clearSelection();
+                    netejarTaulaUsuaris();
+                    omplirTaulaUsuaris();
+                    netejarFormulari();
+                    netejarTaulaProjectesAssignats();
                     canviEstat(Estat.VIEW);
+                    
                 }
             } else if (botoPremut.equals(buttonEditarUsuari)) {
                 if (taulaUsuaris.getSelectedRow() > -1) {
                     canviEstat(Estat.MODIFICACIO_USUARI);
                 }
             } else if (botoPremut.equals(buttonGuardarUsuari)) {
-                if (taulaUsuaris.getSelectedRow() > -1) {
-                    taulaUsuaris.clearSelection();
+                Date data = dataFormulari(textUsuariDataNaix.getText());
+                String cognom2 = textUsuariCognom2.getText();
+            
+                if (textUsuariCognom2.getText().length() < 1){
+                    cognom2 = null;
+                } 
+                if (comprobarDadesFormulari()) {
+                    if (estat == Estat.MODIFICACIO_USUARI) {
+                        Usuari usu = new Usuari (idUsuari, textUsuariNom.getText(),textUsuariCognom1.getText(), 
+                                                 cognom2, data, textUsuariLogin.getText(), 
+                                                 textUsuariPassword.getText());
+                        try {
+                            cp.modificarUsuari(usu);
+                            cp.commit();
+                            netejarTaulaUsuaris();
+                            omplirTaulaUsuaris();
+                        } catch (GestioProjectesException ex) {
+                            System.out.println("Problemes al modificar usauri: " + ex);
+                        }
+                    } else if (estat == Estat.ALTA) {
+                        if (taulaUsuaris.getSelectedRow() > -1) {
+                            taulaUsuaris.clearSelection();
+                        }
+                        
+                        try {
+                            Usuari usu = new Usuari (cp.getLlistaUsuaris().size()+1, textUsuariNom.getText(),
+                                                     textUsuariCognom1.getText(), cognom2, 
+                                                     data, textUsuariLogin.getText(), textUsuariPassword.getText());
+                            cp.addUsuari(usu);
+                            cp.commit();
+                            netejarTaulaUsuaris();
+                            omplirTaulaUsuaris();
+                        } catch (GestioProjectesException ex) {
+                            System.out.println("Problemes al crear usauri: " + ex);
+                        }
+                    }
+
+                    netejarFormulari();
+                    netejarTaulaProjectesAssignats();
                     canviEstat(Estat.VIEW);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Les dades del formulari no son correctes", "Error formulari", JOptionPane.ERROR_MESSAGE);
                 }
-                netejarFormulari();
             } else if (botoPremut.equals(buttonCancelarUsuari)) {
                 omplirFormulari();
                 if (taulaUsuaris.getSelectedRow() > -1) {
                     taulaUsuaris.clearSelection();
+                    netejarTaulaProjectesAssignats();
                     canviEstat(Estat.VIEW);
                 }
                 netejarFormulari();
@@ -539,6 +636,16 @@ public class GestioUsuaris extends JFrame {
                 novaFinestra();
             } else if (botoPremut.equals(buttonDessasignarProjecte)) {
                 if (taulaProjectesAssignats.getSelectedRow() > -1) {
+                    try {
+                        int idProjecte = (int)taulaProjectesAssignats.getValueAt(taulaProjectesAssignats.getSelectedRow(), 0);
+                        cp.desassignarProjecte(cp.getUsuari(idUsuari), cp.getProjecte(idProjecte));
+                        cp.commit();
+                        netejarTaulaProjectesAssignats();
+                        omplirTaulaProjectesAssignats();
+                    } catch (GestioProjectesException ex) {
+                        System.out.println("Problemes al dessasignar un projecte: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
                     canviEstat(Estat.MODIFICACIO_PROJECTE);
                 }
             } else if (botoPremut.equals(buttonCancelarProjecte)) {
@@ -547,7 +654,6 @@ public class GestioUsuaris extends JFrame {
                 } 
                 canviEstat(Estat.MODIFICACIO_USUARI);
             }
-            
             
         }
     

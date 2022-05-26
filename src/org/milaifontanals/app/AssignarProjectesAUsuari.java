@@ -23,10 +23,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
+import org.milaifontanals.interficie.GestioProjectesException;
+import org.milaifontanals.interficie.IGestioProjectes;
 import org.milaifontanals.model.Projecte;
 import org.milaifontanals.model.Usuari;
 
@@ -46,15 +50,21 @@ public class AssignarProjectesAUsuari extends JFrame {
     private JTable taulaProjectesNoAssignats;
     private DefaultTableModel tProjectesNoAssignats;
     
-    private List<Usuari> usuaris = new ArrayList();
-    private List<Projecte> projectes = new ArrayList();
     private List<String> columnesTaulaProjectes = new ArrayList();
     
     private GestioBotons gestionador;
     
     private GridBagConstraints gbc;
     
-    public AssignarProjectesAUsuari(String titol) {
+    private IGestioProjectes cp;
+    
+    private Integer idUsuari;
+    private DefaultTableModel tProjectesAssignats;
+    
+    public AssignarProjectesAUsuari(String titol, IGestioProjectes interficie, Integer usuariSeleccionat, DefaultTableModel taulaProjectesAssignats) {
+        cp = interficie;
+        idUsuari = usuariSeleccionat;
+        tProjectesAssignats = taulaProjectesAssignats;
         setTitle(titol);
         setLayout(new GridBagLayout());
         entornGrafic();
@@ -146,18 +156,8 @@ public class AssignarProjectesAUsuari extends JFrame {
             }
         };
         
-        usuaris.add(new Usuari(1, "Usuari 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari", "password"));
-        usuaris.add(new Usuari(2, "Usuari 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari", "password"));
-        usuaris.add(new Usuari(3, "Usuari 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari", "password"));
-        usuaris.add(new Usuari(4, "Usuari 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari", "password"));
-        
-        projectes.add(new Projecte(1, "Projecte 1", "Projecte 1", usuaris.get(0)));
-        projectes.add(new Projecte(2, "Projecte 2", "Projecte 2", usuaris.get(1)));
-        projectes.add(new Projecte(3, "Projecte 3", "Projecte 3", usuaris.get(2)));
-        projectes.add(new Projecte(4, "Projecte 4", "Projecte 4", usuaris.get(3)));
-        projectes.add(new Projecte(12, "Projecte 12", "Projecte 12", usuaris.get(0)));
-        
         tProjectesNoAssignats = new DefaultTableModel();//columnNames, usuaris.size());
+        columnesTaulaProjectes.add("Id");
         columnesTaulaProjectes.add("Nom");
         columnesTaulaProjectes.add("Descripcio");
         
@@ -165,16 +165,33 @@ public class AssignarProjectesAUsuari extends JFrame {
             tProjectesNoAssignats.addColumn(columnesTaulaProjectes.get(i));
         }
         
-        for (Projecte proj: projectes) {
-            Object[] fila = new Object[2];
-            fila[0] = proj.getNom();
-            fila[1] = proj.getDescripcio();
-
-            tProjectesNoAssignats.addRow(fila);
-        }
+        omplirTaulaProjectesNoAssignats();
         
         taulaProjectesNoAssignats.setModel(tProjectesNoAssignats);
         
+    }
+    
+    private void omplirTaulaProjectesNoAssignats() {
+        try {
+            for (Projecte proj: cp.getLlistaProjectesNoAssignats(cp.getUsuari(idUsuari))) { 
+                Object[] fila = new Object[3];
+                fila[0] = proj.getId();
+                fila[1] = proj.getNom();
+                fila[2] = proj.getDescripcio();
+
+                tProjectesNoAssignats.addRow(fila);
+            }
+        } catch (GestioProjectesException ex) {
+            System.out.println("Problema en omplir la taula projectes no assignats: " + ex.getMessage());
+        }
+    }
+
+    private void netejarTaulaProjectesNoAssignats() {
+        if (tProjectesNoAssignats.getRowCount() > 0) {
+            for (int i = tProjectesNoAssignats.getRowCount() - 1; i >=0 ; i--) {
+                tProjectesNoAssignats.removeRow(i);
+            }
+        }
     }
     
     
@@ -191,27 +208,75 @@ public class AssignarProjectesAUsuari extends JFrame {
                     for (int i = files - 1; i >=0 ; i--) {
                         tProjectesNoAssignats.removeRow(i);
                     }
+                    List<Projecte> projectes = new ArrayList();
+                    
+                    try {
+                        projectes =  cp.getLlistaProjectesNoAssignats(cp.getUsuari(idUsuari));
+                    } catch (GestioProjectesException ex) {
+                        Logger.getLogger(AssignarProjectesAUsuari.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    
                     for (int i = 0; i < projectes.size(); i++){
                         if (projectes.get(i).getNom().toLowerCase().contains(textFiltre.getText().toLowerCase())){
-                            Object[] fila = new Object[2];
-                            fila[0] = projectes.get(i).getNom();
-                            fila[1] = projectes.get(i).getDescripcio();
+                            Object[] fila = new Object[3];
+                            fila[0] = projectes.get(i).getId();
+                            fila[1] = projectes.get(i).getNom();
+                            fila[2] = projectes.get(i).getDescripcio();
                             tProjectesNoAssignats.addRow(fila);
                         }
                     }
                     
+                } else {
+                    netejarTaulaProjectesNoAssignats();
+                    omplirTaulaProjectesNoAssignats();
                 }
                 
                 
             } else if (botoPremut.equals(buttonGuardar)) {
                 if (taulaProjectesNoAssignats.getSelectedRow() > -1){
-                        
+                    try {
+                        int idProjecte = (int)taulaProjectesNoAssignats.getValueAt(taulaProjectesNoAssignats.getSelectedRow(), 0);
+                        cp.assignarProjecte(cp.getUsuari(idUsuari), cp.getProjecte(idProjecte));
+                        cp.commit();
+                        netejarTaulaProjectesNoAssignats();
+                        omplirTaulaProjectesNoAssignats();
+                        netejarTaulaProjectesAssignats();
+                        omplirTaulaProjectesAssignats();
+                    } catch (GestioProjectesException ex) {
+                        System.out.println("Problemes al dessasignar un projecte: " + ex.getMessage());
+                        ex.printStackTrace();
+                    }
+                    dispose();
                 }
             } else if (botoPremut.equals(buttonCancelar)) {
                 dispose();
             } 
         }
     
+    }
+    
+    private void omplirTaulaProjectesAssignats() {
+        try {
+            List<Projecte> projectes = cp.getLlistaProjectesAssignats(cp.getUsuari(idUsuari));
+            for (int i = 0; i < projectes.size(); i++) {
+                Object[] fila = new Object[3];
+                fila[0] = projectes.get(i).getId();
+                fila[1] = projectes.get(i).getNom();
+                fila[2] = projectes.get(i).getDescripcio();
+
+                tProjectesAssignats.addRow(fila);  
+            } 
+        } catch (GestioProjectesException ex) {
+            System.out.println("Problema en omplir la taula de projectes assignats: "+ ex.getMessage());
+        }
+    }
+
+    private void netejarTaulaProjectesAssignats() {
+        if (tProjectesAssignats.getRowCount() > 0) {
+            for (int i = tProjectesAssignats.getRowCount() - 1; i >=0 ; i--) {
+                tProjectesAssignats.removeRow(i);
+            }
+        }
     }
     
     

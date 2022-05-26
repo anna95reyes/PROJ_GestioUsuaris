@@ -162,6 +162,18 @@ public class Proves {
             System.out.println("ERROR LLISTA ASSIGNATS: " + ex.getMessage());
         }
         
+        try {
+            System.out.println("Projectes No Assignats: ");
+            List<Projecte> projectes = new ArrayList();
+            projectes = cp.getLlistaProjectesNoAssignats(cp.getUsuari(1));
+            for (Projecte proj: projectes) {
+                System.out.println("PROJECTE NO ASSIGNAT: " + proj.getId() + " " + proj.getNom());
+            }
+        } catch (Exception ex){
+            System.out.println("ERROR LLISTA ASSIGNATS: " + ex.getMessage());
+        }
+        
+        
 //        try {
 //            Usuari usuari = cp.getUsuari(2);
 //            Projecte projecte = cp.getProjecte(3);
@@ -172,6 +184,8 @@ public class Proves {
 //            System.out.println("ERROR ASSIGNAR PROJECTE: " + ex.getMessage());
 //        }
 //        
+        
+        
 //        try {
 //            Usuari usuari = cp.getUsuari(1);
 //            Projecte projecte = cp.getProjecte(1);
