@@ -16,6 +16,8 @@ import java.awt.Insets;
 import java.awt.ScrollPane;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -34,6 +36,7 @@ import javax.swing.JFormattedTextField;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
@@ -88,18 +91,19 @@ public class GestioUsuaris extends JFrame {
     private JTable taulaProjectesAssignats;
     private DefaultTableModel tProjectesAssignats;
     
-    private List<Usuari> usuaris = new ArrayList();
-    private List<Projecte> projectes = new ArrayList();
+    //private List<Usuari> usuaris = new ArrayList();
+    //private List<Projecte> projectes = new ArrayList();
     private List<String> columnesTaulaUsuaris = new ArrayList();
     private List<String> columnesTaulaProjectes = new ArrayList();
     
     private GestioBotons gestionador;
-    
     private GridBagConstraints gbc;
     
     private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
     
     private IGestioProjectes cp;
+    
+    private int usuariSeleccionat = 1;
     
     public enum Estat {
         VIEW,
@@ -121,6 +125,18 @@ public class GestioUsuaris extends JFrame {
         setLocation(10,10);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e); 
+                //JOptionPane.showConfirmDialog(null,"Are sure to close!");
+                int resposta = JOptionPane.showConfirmDialog(null, "Segur que vols tancar l'aplicacio?", "Tancar aplicacio", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (resposta == 0) {
+                    tancarCapaPersistencia();
+                }
+            }
+
+        });
     }
     
     
@@ -165,10 +181,9 @@ public class GestioUsuaris extends JFrame {
                 if (e.getValueIsAdjusting()) // si hi ha canvi de seleccio en el JTable
                 {
                     omplirFormulari();
-                    if (taulaUsuaris.getSelectedRow() > -1){
-                        canviEstat(Estat.MODIFICACIO_USUARI);
-                    }
-                    
+                    usuariSeleccionat = taulaUsuaris.getSelectedRow() + 1;
+                    netejarTaulaProjectesAssignats();
+                    omplirTaulaProjectesAssignats();
                 }
             }
         });
@@ -223,15 +238,6 @@ public class GestioUsuaris extends JFrame {
                 return false; // fem que no sigui editable
             }
         };
-  
-        //------------
-        usuaris.add(new Usuari(1, "Usuari 1", "Cognom 1", "Cognom 1", new Date(2000-1900,1-1,1), "usuari1", "password1"));
-        usuaris.add(new Usuari(2, "Usuari 2", "Cognom 2", new Date(2000-1900,1-1,1), "usuari2", "password2"));
-        usuaris.add(new Usuari(3, "Usuari 3", "Cognom 3", new Date(2000-1900,1-1,1), "usuari3", "password3"));
-        usuaris.add(new Usuari(4, "Usuari 4", "Cognom 4", new Date(2000-1900,1-1,1), "usuari4", "password4"));
-        //---------------
-             
-
         tUsuaris = new DefaultTableModel();//columnNames, usuaris.size());
         columnesTaulaUsuaris.add("Nom");
         columnesTaulaUsuaris.add("1r. Cognom");
@@ -411,12 +417,7 @@ public class GestioUsuaris extends JFrame {
                 return false; // fem que no sigui editable
             }
         };
-        
-        projectes.add(new Projecte(1, "Projecte 1", "Projecte 1", usuaris.get(0)));
-        projectes.add(new Projecte(2, "Projecte 2", "Projecte 2", usuaris.get(1)));
-        projectes.add(new Projecte(3, "Projecte 3", "Projecte 3", usuaris.get(2)));
-        projectes.add(new Projecte(4, "Projecte 4", "Projecte 4", usuaris.get(3)));
-        
+
         tProjectesAssignats = new DefaultTableModel();
         columnesTaulaProjectes.add("Nom");
         columnesTaulaProjectes.add("Descripcio");
@@ -425,16 +426,34 @@ public class GestioUsuaris extends JFrame {
             tProjectesAssignats.addColumn(columnesTaulaProjectes.get(i));
         }
         
-        for (Projecte proj: projectes) {
-            Object[] fila = new Object[2];
-            fila[0] = proj.getNom();
-            fila[1] = proj.getDescripcio();
-
-            tProjectesAssignats.addRow(fila);
-        }
+        omplirTaulaProjectesAssignats();
         
         taulaProjectesAssignats.setModel(tProjectesAssignats);
      
+    }
+
+    private void omplirTaulaProjectesAssignats() {
+        try {
+            List<Projecte> projectes = cp.getLlistaProjectesAssignats(cp.getUsuari(usuariSeleccionat));
+            for (int i = 0; i < projectes.size(); i++) {
+                Object[] fila = new Object[2];
+                fila[0] = projectes.get(i).getNom();
+                fila[1] = projectes.get(i).getDescripcio();
+
+                tProjectesAssignats.addRow(fila);  
+            }
+        } catch (GestioProjectesException ex) {
+            System.out.println("OMPLIR TAULA PROJECTES ASSIGNATS");
+            Logger.getLogger(GestioUsuaris.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    private void netejarTaulaProjectesAssignats() {
+        if (tProjectesAssignats.getRowCount() > 0) {
+            for (int i = tProjectesAssignats.getRowCount() - 1; i >=0 ; i--) {
+                tProjectesAssignats.removeRow(i);
+            }
+        }
     }
     
     private void novaFinestra() {
@@ -608,5 +627,12 @@ public class GestioUsuaris extends JFrame {
         gbc.insets = new Insets(top, left, bottom, right);
     }
     
-    
+    private void tancarCapaPersistencia(){
+        try {
+            cp.closeCapa();
+            System.out.println("Capa tancada");
+        } catch (GestioProjectesException ex) {
+            System.out.println("Error en tancar la capa de persistència");
+        }
+    }
 }

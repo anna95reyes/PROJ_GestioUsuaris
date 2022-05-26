@@ -36,7 +36,6 @@ public class Main {
         
         GestioUsuaris gestio = new GestioUsuaris("Gestió d'usuaris", cp);
         
-        tancarCapaPersistencia();
     }
     
     private static void crearCapaPersistencia(String nomFitxer){
@@ -65,9 +64,6 @@ public class Main {
         cp = null;
         
         try {
-            System.out.println("APLICACIÓ VIA FACTORIA");
-            // Aquesta aplicació està preparada per obtenir un objecte de la capa invocant el constructor
-            // sense paràmetres
             cp = CPSingleton.getGestorProjectes(nomCapa);
             System.out.println("Capa de persistència creada");
         } catch (Exception ex) {
@@ -77,15 +73,7 @@ public class Main {
         }
     }
     
-    private static void tancarCapaPersistencia(){
-        try {
-            cp.closeCapa();
-            System.out.println("Capa tancada");
-        } catch (GestioProjectesException ex) {
-            System.out.println("Error en tancar la capa de persistència");
-            infoError(ex);
-        }
-    }
+    
     
     private static void infoError(Throwable aux) {
         do {

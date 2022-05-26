@@ -152,15 +152,26 @@ public class Proves {
         }
         
         try {
-            Usuari usuari = cp.getUsuari(2);
-            Projecte projecte = cp.getProjecte(3);
-            System.out.println("Assignar projecte");
-            cp.assignarProjecte(usuari, projecte);
-            cp.commit();
+            System.out.println("Projectes Assignats: ");
+            List<Projecte> projectes = new ArrayList();
+            projectes = cp.getLlistaProjectesAssignats(cp.getUsuari(1));
+            for (Projecte proj: projectes) {
+                System.out.println("PROJECTE ASSIGNAT: " + proj.getId() + " " + proj.getNom());
+            }
         } catch (Exception ex){
-            System.out.println("ERROR ASSIGNAR PROJECTE: " + ex.getMessage());
+            System.out.println("ERROR LLISTA ASSIGNATS: " + ex.getMessage());
         }
         
+//        try {
+//            Usuari usuari = cp.getUsuari(2);
+//            Projecte projecte = cp.getProjecte(3);
+//            System.out.println("Assignar projecte");
+//            cp.assignarProjecte(usuari, projecte);
+//            cp.commit();
+//        } catch (Exception ex){
+//            System.out.println("ERROR ASSIGNAR PROJECTE: " + ex.getMessage());
+//        }
+//        
 //        try {
 //            Usuari usuari = cp.getUsuari(1);
 //            Projecte projecte = cp.getProjecte(1);
