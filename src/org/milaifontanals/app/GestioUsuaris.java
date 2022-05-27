@@ -59,7 +59,7 @@ import org.milaifontanals.model.Projecte;
 import org.milaifontanals.model.Usuari;
 
 /**
- *
+ * 
  * @author anna9
  */
 public class GestioUsuaris extends JFrame {
