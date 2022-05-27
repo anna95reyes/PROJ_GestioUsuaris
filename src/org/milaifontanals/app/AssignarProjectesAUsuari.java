@@ -25,6 +25,7 @@ import javax.swing.JTextField;
 import java.awt.event.ActionListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -168,6 +169,8 @@ public class AssignarProjectesAUsuari extends JFrame {
         omplirTaulaProjectesNoAssignats();
         
         taulaProjectesNoAssignats.setModel(tProjectesNoAssignats);
+        taulaProjectesNoAssignats.getTableHeader().getColumnModel().getColumn(0).setMaxWidth(30);
+        taulaProjectesNoAssignats.getColumnModel().getColumn(0).setMaxWidth(30); 
         
     }
     
@@ -182,7 +185,8 @@ public class AssignarProjectesAUsuari extends JFrame {
                 tProjectesNoAssignats.addRow(fila);
             }
         } catch (GestioProjectesException ex) {
-            System.out.println("Problema en omplir la taula projectes no assignats: " + ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Problema en omplir la taula de projectes no assignats", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -243,8 +247,8 @@ public class AssignarProjectesAUsuari extends JFrame {
                         netejarTaulaProjectesAssignats();
                         omplirTaulaProjectesAssignats();
                     } catch (GestioProjectesException ex) {
-                        System.out.println("Problemes al dessasignar un projecte: " + ex.getMessage());
-                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(null, "Error en asignar un projecte", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
                     }
                     dispose();
                 }
@@ -267,7 +271,8 @@ public class AssignarProjectesAUsuari extends JFrame {
                 tProjectesAssignats.addRow(fila);  
             } 
         } catch (GestioProjectesException ex) {
-            System.out.println("Problema en omplir la taula de projectes assignats: "+ ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Problema en omplir la taula de projectes assignats", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
         }
     }
 

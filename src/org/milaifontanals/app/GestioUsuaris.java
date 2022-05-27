@@ -21,6 +21,9 @@ import java.awt.event.WindowEvent;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -83,7 +86,7 @@ public class GestioUsuaris extends JFrame {
     private JButton buttonCancelarUsuari;
     private JLabel labelProjectes;
     private JButton buttonAssignarProjecte;
-    private JButton buttonDessasignarProjecte;
+    private JButton buttonDesassignarProjecte;
     private JButton buttonCancelarProjecte;
     
     private JTable taulaUsuaris;
@@ -186,7 +189,6 @@ public class GestioUsuaris extends JFrame {
                     omplirFormulari();
                     filaSeleccionada = taulaUsuaris.getSelectedRow();
                     idUsuari = (int)taulaUsuaris.getValueAt(taulaUsuaris.getSelectedRow(), 0);
-                    
                     netejarTaulaProjectesAssignats();
                     omplirTaulaProjectesAssignats();
                 }
@@ -250,7 +252,7 @@ public class GestioUsuaris extends JFrame {
         columnesTaulaUsuaris.add("2n. Cognom");
         columnesTaulaUsuaris.add("Data naixement");
         columnesTaulaUsuaris.add("Login");
-        columnesTaulaUsuaris.add("Password");
+        columnesTaulaUsuaris.add("Contrasenya");
         
         for (int i = 0; i < columnesTaulaUsuaris.size(); i++){
             tUsuaris.addColumn(columnesTaulaUsuaris.get(i));
@@ -259,10 +261,24 @@ public class GestioUsuaris extends JFrame {
         omplirTaulaUsuaris();
         
         taulaUsuaris.setModel(tUsuaris);
-     
+        
+        /*
+            Aixo ho faig servir per poder ocultar la columna de la contrasenya, que la necesito per omplir el formulari,
+            pero no vui que es veuigi.
+        */
+        taulaUsuaris.getTableHeader().getColumnModel().getColumn(6).setPreferredWidth(0);
+        taulaUsuaris.getTableHeader().getColumnModel().getColumn(6).setMaxWidth(0);
+        taulaUsuaris.getTableHeader().getColumnModel().getColumn(6).setMinWidth(0);
+        taulaUsuaris.getColumnModel().getColumn(6).setPreferredWidth(0); 
+        taulaUsuaris.getColumnModel().getColumn(6).setMaxWidth(0); 
+        taulaUsuaris.getColumnModel().getColumn(6).setMinWidth(0);
+        
+        taulaUsuaris.getTableHeader().getColumnModel().getColumn(0).setMaxWidth(30);
+        taulaUsuaris.getColumnModel().getColumn(0).setMaxWidth(30); 
     }
     
     private void omplirTaulaUsuaris() {
+        
         try {
             for (Usuari usus : cp.getLlistaUsuaris()) {
                 Object[] fila = new Object[7];
@@ -272,12 +288,17 @@ public class GestioUsuaris extends JFrame {
                 fila[3] = usus.getCognom2();
                 fila[4] = usus.getDataNaixementFormatada();
                 fila[5] = usus.getLogin();
-                fila[6] = usus.getPasswrdHash();
+                /*
+                    He tingut que afegir el hash de la contrasenya per poder obtenir-lo al formulari,
+                    ja que si l'anaba a buscar a la base de dades trigaba molt mes a l'hora d'omplir 
+                    els camps i el primer cop que sel·lecciones un usuari acaba donant error.
+                */
+                fila[6] = usus.getPasswordHash();
                 
                 tUsuaris.addRow(fila);
             }
         } catch (GestioProjectesException ex) {
-            System.out.println("Problema en omplir la taula d'usuaris: " + ex.getMessage());
+            Logger.getLogger(GestioUsuaris.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 
@@ -290,22 +311,25 @@ public class GestioUsuaris extends JFrame {
     }
     
     private void formulariUsuari(){
-        labelUsuariNom = new JLabel("Nom: ", JLabel.RIGHT);
-        labelUsuariCognom1 = new JLabel("1r. Cognom: ", JLabel.RIGHT);
+        labelUsuariNom = new JLabel("Nom: *", JLabel.RIGHT);
+        labelUsuariCognom1 = new JLabel("1r. Cognom: *", JLabel.RIGHT);
         labelUsuariCognom2 = new JLabel("2n. Cognom: ", JLabel.RIGHT);
-        labelUsuariDataNaix = new JLabel("Data de naixement: ", JLabel.RIGHT);
-        labelUsuariLogin = new JLabel("Login: ", JLabel.RIGHT);
-        labelUsuariPassword = new JLabel("Password: ", JLabel.RIGHT);
-    
+        labelUsuariDataNaix = new JLabel("Data de naixement: *", JLabel.RIGHT);
+        labelUsuariLogin = new JLabel("Login: *", JLabel.RIGHT);
+        labelUsuariPassword = new JLabel("Password: *", JLabel.RIGHT);
+        
         textUsuariNom = new JTextField(20);
         textUsuariCognom1 = new JTextField(20);
         textUsuariCognom2 = new JTextField(20);
         textUsuariDataNaix = new JFormattedTextField(sdf);
-        textUsuariDataNaix.setToolTipText("YYYY-MM-DD");
         textUsuariDataNaix.setColumns(10);
         textUsuariLogin = new JTextField(20);
         textUsuariPassword = new JPasswordField(20);
-                
+        
+        TextPrompt placeholder = new TextPrompt("YYYY-MM-DD", textUsuariDataNaix);
+        placeholder.changeAlpha(0.75f);
+        placeholder.changeStyle(Font.ITALIC);
+        
         buttonGuardarUsuari = new JButton("Guardar");
         buttonCancelarUsuari = new JButton("Cancelar");
         
@@ -401,11 +425,11 @@ public class GestioUsuaris extends JFrame {
         });
         
         buttonAssignarProjecte = new JButton("Assignar");
-        buttonDessasignarProjecte = new JButton("Dessasignar");
+        buttonDesassignarProjecte = new JButton("Desassignar");
         buttonCancelarProjecte = new JButton("Cancelar");
         
         buttonAssignarProjecte.addActionListener(gestionador);
-        buttonDessasignarProjecte.addActionListener(gestionador);
+        buttonDesassignarProjecte.addActionListener(gestionador);
         buttonCancelarProjecte.addActionListener(gestionador);
         
         borderElementsGrid(25, 10, 10, 10);
@@ -421,7 +445,7 @@ public class GestioUsuaris extends JFrame {
         panelDret.add(buttonAssignarProjecte, gbc);
         borderElementsGrid(10, 10, 10, 10);
         grid(1, 9, 1, 1, 1, 1);
-        panelDret.add(buttonDessasignarProjecte, gbc);
+        panelDret.add(buttonDesassignarProjecte, gbc);
         borderElementsGrid(10, 10, 10, 10);
         grid(2, 9, 1, 1, 1, 1);
         panelDret.add(buttonCancelarProjecte, gbc);
@@ -449,6 +473,8 @@ public class GestioUsuaris extends JFrame {
         
         taulaProjectesAssignats.setModel(tProjectesAssignats);
      
+        taulaProjectesAssignats.getTableHeader().getColumnModel().getColumn(0).setMaxWidth(30);
+        taulaProjectesAssignats.getColumnModel().getColumn(0).setMaxWidth(30); 
     }
 
     private void omplirTaulaProjectesAssignats() {
@@ -466,7 +492,8 @@ public class GestioUsuaris extends JFrame {
                 }
             }
         } catch (GestioProjectesException ex) {
-            System.out.println("Problema en omplir la taula de projectes assignats: "+ ex.getMessage());
+            JOptionPane.showMessageDialog(null, "Error en omplir la taula de projectes assignats", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -502,8 +529,8 @@ public class GestioUsuaris extends JFrame {
             textUsuariCognom1.setText((String)taulaUsuaris.getValueAt(fila, 2));
             textUsuariCognom2.setText((String)taulaUsuaris.getValueAt(fila, 3));
             textUsuariDataNaix.setText((String)taulaUsuaris.getValueAt(fila, 4));
-            textUsuariLogin.setText((String)taulaUsuaris.getValueAt(fila, 5));        
-            textUsuariPassword.setText((String)taulaUsuaris.getValueAt(fila, 6));         
+            textUsuariLogin.setText((String)taulaUsuaris.getValueAt(fila, 5));
+            textUsuariPassword.setText((String)taulaUsuaris.getValueAt(fila, 6));
         }
     }
     
@@ -565,7 +592,7 @@ public class GestioUsuaris extends JFrame {
                         cp.commit();
                     } catch (GestioProjectesException ex) {
                         JOptionPane.showMessageDialog(null, "No es pot esborrar aquest usuari perque esta sent utilitzat", 
-                                "Error eliminar usuari", JOptionPane.ERROR_MESSAGE);
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
                     }
                     taulaUsuaris.clearSelection();
                     netejarTaulaUsuaris();
@@ -582,22 +609,43 @@ public class GestioUsuaris extends JFrame {
             } else if (botoPremut.equals(buttonGuardarUsuari)) {
                 Date data = dataFormulari(textUsuariDataNaix.getText());
                 String cognom2 = textUsuariCognom2.getText();
-            
+                String hashContrasenya = null;
+                try {
+                    hashContrasenya = cp.hashMD5(textUsuariPassword.getText());
+                } catch (GestioProjectesException ex) {
+                    JOptionPane.showMessageDialog(null, "Problema en generar el hash de la contrasenya", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
+                }
+                
                 if (textUsuariCognom2.getText().length() < 1){
                     cognom2 = null;
                 } 
                 if (comprobarDadesFormulari()) {
                     if (estat == Estat.MODIFICACIO_USUARI) {
+                        String contrasenyaAntiga = null;
+                        try {
+                            contrasenyaAntiga = cp.getUsuari(idUsuari).getPasswordHash();
+                        } catch (GestioProjectesException ex) {
+                        }
+                        String contrasenyaActual;
+                        if (contrasenyaAntiga.equals(textUsuariPassword.getText())) {
+                            contrasenyaActual = contrasenyaAntiga;
+                        } else {
+                            contrasenyaActual = hashContrasenya;
+                        }
+                        
+                        
                         Usuari usu = new Usuari (idUsuari, textUsuariNom.getText(),textUsuariCognom1.getText(), 
                                                  cognom2, data, textUsuariLogin.getText(), 
-                                                 textUsuariPassword.getText());
+                                                 contrasenyaActual);
                         try {
                             cp.modificarUsuari(usu);
                             cp.commit();
                             netejarTaulaUsuaris();
                             omplirTaulaUsuaris();
                         } catch (GestioProjectesException ex) {
-                            System.out.println("Problemes al modificar usauri: " + ex);
+                            JOptionPane.showMessageDialog(null, "Error en modificar l'usuari", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
                         }
                     } else if (estat == Estat.ALTA) {
                         if (taulaUsuaris.getSelectedRow() > -1) {
@@ -607,13 +655,14 @@ public class GestioUsuaris extends JFrame {
                         try {
                             Usuari usu = new Usuari (cp.getLlistaUsuaris().size()+1, textUsuariNom.getText(),
                                                      textUsuariCognom1.getText(), cognom2, 
-                                                     data, textUsuariLogin.getText(), textUsuariPassword.getText());
+                                                     data, textUsuariLogin.getText(), hashContrasenya);
                             cp.addUsuari(usu);
                             cp.commit();
                             netejarTaulaUsuaris();
                             omplirTaulaUsuaris();
                         } catch (GestioProjectesException ex) {
-                            System.out.println("Problemes al crear usauri: " + ex);
+                            JOptionPane.showMessageDialog(null, "Error al crear l'usuari", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
                         }
                     }
 
@@ -634,7 +683,7 @@ public class GestioUsuaris extends JFrame {
             } else if (botoPremut.equals(buttonAssignarProjecte)) {
                 canviEstat(Estat.MODIFICACIO_PROJECTE);
                 novaFinestra();
-            } else if (botoPremut.equals(buttonDessasignarProjecte)) {
+            } else if (botoPremut.equals(buttonDesassignarProjecte)) {
                 if (taulaProjectesAssignats.getSelectedRow() > -1) {
                     try {
                         int idProjecte = (int)taulaProjectesAssignats.getValueAt(taulaProjectesAssignats.getSelectedRow(), 0);
@@ -643,7 +692,9 @@ public class GestioUsuaris extends JFrame {
                         netejarTaulaProjectesAssignats();
                         omplirTaulaProjectesAssignats();
                     } catch (GestioProjectesException ex) {
-                        System.out.println("Problemes al dessasignar un projecte: " + ex.getMessage());
+                        JOptionPane.showMessageDialog(null, "Error en desassignar un projecte", 
+                                "Error gestio usuaris", JOptionPane.ERROR_MESSAGE);
+                        System.out.println("ERROR: "+ex.getMessage());
                         ex.printStackTrace();
                     }
                     canviEstat(Estat.MODIFICACIO_PROJECTE);
@@ -659,7 +710,6 @@ public class GestioUsuaris extends JFrame {
     
     }
     
-    
     private void canviEstat(Estat estatNou)
     {
         estat = estatNou;
@@ -673,7 +723,7 @@ public class GestioUsuaris extends JFrame {
             buttonCancelarUsuari.setEnabled(false);
             
             buttonAssignarProjecte.setEnabled(false);
-            buttonDessasignarProjecte.setEnabled(false);
+            buttonDesassignarProjecte.setEnabled(false);
             buttonCancelarProjecte.setEnabled(false);
         } 
         else if (estat == Estat.MODIFICACIO_USUARI)
@@ -686,7 +736,7 @@ public class GestioUsuaris extends JFrame {
             buttonCancelarUsuari.setEnabled(true);
             
             buttonAssignarProjecte.setEnabled(true);
-            buttonDessasignarProjecte.setEnabled(false);
+            buttonDesassignarProjecte.setEnabled(false);
             buttonCancelarProjecte.setEnabled(false);
         }
         else if (estat == Estat.MODIFICACIO_PROJECTE)
@@ -699,7 +749,7 @@ public class GestioUsuaris extends JFrame {
             buttonCancelarUsuari.setEnabled(false);
             
             buttonAssignarProjecte.setEnabled(true);
-            buttonDessasignarProjecte.setEnabled(true);
+            buttonDesassignarProjecte.setEnabled(true);
             buttonCancelarProjecte.setEnabled(true);
         }
         else if (estat == Estat.ALTA)
@@ -713,7 +763,7 @@ public class GestioUsuaris extends JFrame {
             buttonCancelarUsuari.setEnabled(true);
             
             buttonAssignarProjecte.setEnabled(true);
-            buttonDessasignarProjecte.setEnabled(false);
+            buttonDesassignarProjecte.setEnabled(false);
             buttonCancelarProjecte.setEnabled(true);
         }
         
@@ -736,9 +786,9 @@ public class GestioUsuaris extends JFrame {
     private void tancarCapaPersistencia(){
         try {
             cp.closeCapa();
-            System.out.println("Capa tancada");
         } catch (GestioProjectesException ex) {
-            System.out.println("Error en tancar la capa de persistència");
+            JOptionPane.showMessageDialog(null, "Error en tancar la capa de persistència", 
+                                "Error Capa de Persistencia", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

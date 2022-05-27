@@ -9,6 +9,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Properties;
+import javax.swing.JOptionPane;
 import org.milaifontanals.interficie.CPSingleton;
 import org.milaifontanals.interficie.GestioProjectesException;
 import org.milaifontanals.interficie.IGestioProjectes;
@@ -44,20 +45,18 @@ public class Main {
         try {
             props.load(new FileReader(nomFitxer));
         } catch (FileNotFoundException ex) {
-            System.out.println("No es troba fitxer de propietats " + nomFitxer);
-            infoError(ex);
-            System.out.println("Avortem aplicació");
+            JOptionPane.showMessageDialog(null, "No es troba fitxer de propietats " + nomFitxer, 
+                                "Error Capa de Persistencia", JOptionPane.ERROR_MESSAGE);
             return;
         } catch (IOException ex) {
-            System.out.println("Error en carregar fitxer de propietats " + nomFitxer);
-            infoError(ex);
-            System.out.println("Avortem aplicació");
+            JOptionPane.showMessageDialog(null, "Error en carregar fitxer de propietats " + nomFitxer, 
+                                "Error Capa de Persistencia", JOptionPane.ERROR_MESSAGE);
             return;
         }
         String nomCapa = props.getProperty("nomCapa");
         if (nomCapa == null || nomCapa.equals("")) {
-            System.out.println("Fitxer de propietats " + nomFitxer + " no conté propietat nomCapa");
-            System.out.println("Avortem aplicació");
+            JOptionPane.showMessageDialog(null, "Fitxer de propietats " + nomFitxer + " no conté propietat nomCapa", 
+                                "Error Capa de Persistencia", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -65,23 +64,10 @@ public class Main {
         
         try {
             cp = CPSingleton.getGestorProjectes(nomCapa);
-            System.out.println("Capa de persistència creada");
         } catch (Exception ex) {
-            System.out.println("");
-            infoError(ex);
+            JOptionPane.showMessageDialog(null, "Error en crear capa de persistencia", 
+                                "Error Capa de Persistencia", JOptionPane.ERROR_MESSAGE);
             return;
         }
-    }
-    
-    
-    
-    private static void infoError(Throwable aux) {
-        do {
-            if (aux.getMessage() != null) {
-                System.out.println("\t" + aux.getMessage());
-            }
-            aux = aux.getCause();
-        } while (aux != null);
-
     }
 }
