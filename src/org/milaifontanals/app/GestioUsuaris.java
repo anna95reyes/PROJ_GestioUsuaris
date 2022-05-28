@@ -725,6 +725,13 @@ public class GestioUsuaris extends JFrame {
             buttonAssignarProjecte.setEnabled(false);
             buttonDesassignarProjecte.setEnabled(false);
             buttonCancelarProjecte.setEnabled(false);
+            
+            textUsuariNom.setEditable(false);
+            textUsuariCognom1.setEditable(false);
+            textUsuariCognom2.setEditable(false);
+            textUsuariDataNaix.setEditable(false);
+            textUsuariLogin.setEditable(false);
+            textUsuariPassword.setEditable(false);
         } 
         else if (estat == Estat.MODIFICACIO_USUARI)
         {
@@ -738,6 +745,13 @@ public class GestioUsuaris extends JFrame {
             buttonAssignarProjecte.setEnabled(true);
             buttonDesassignarProjecte.setEnabled(false);
             buttonCancelarProjecte.setEnabled(false);
+            
+            textUsuariNom.setEditable(true);
+            textUsuariCognom1.setEditable(true);
+            textUsuariCognom2.setEditable(true);
+            textUsuariDataNaix.setEditable(true);
+            textUsuariLogin.setEditable(true);
+            textUsuariPassword.setEditable(true);
         }
         else if (estat == Estat.MODIFICACIO_PROJECTE)
         {
@@ -751,6 +765,13 @@ public class GestioUsuaris extends JFrame {
             buttonAssignarProjecte.setEnabled(true);
             buttonDesassignarProjecte.setEnabled(true);
             buttonCancelarProjecte.setEnabled(true);
+            
+            textUsuariNom.setEditable(true);
+            textUsuariCognom1.setEditable(true);
+            textUsuariCognom2.setEditable(true);
+            textUsuariDataNaix.setEditable(true);
+            textUsuariLogin.setEditable(true);
+            textUsuariPassword.setEditable(true);
         }
         else if (estat == Estat.ALTA)
         {
@@ -765,6 +786,13 @@ public class GestioUsuaris extends JFrame {
             buttonAssignarProjecte.setEnabled(true);
             buttonDesassignarProjecte.setEnabled(false);
             buttonCancelarProjecte.setEnabled(true);
+            
+            textUsuariNom.setEditable(true);
+            textUsuariCognom1.setEditable(true);
+            textUsuariCognom2.setEditable(true);
+            textUsuariDataNaix.setEditable(true);
+            textUsuariLogin.setEditable(true);
+            textUsuariPassword.setEditable(true);
         }
         
     }
