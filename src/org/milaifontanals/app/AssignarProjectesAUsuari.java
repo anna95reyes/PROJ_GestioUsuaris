@@ -108,7 +108,7 @@ public class AssignarProjectesAUsuari extends JFrame {
             
         }
         
-        labelRols = new JLabel("Rols: ", JLabel.LEFT);
+        labelRols = new JLabel("Rol: ", JLabel.LEFT);
         comboRols = new JComboBox(llistaRols);
         comboRols.setSelectedIndex(-1);
         comboRols.addActionListener(new GestioComboBox());
