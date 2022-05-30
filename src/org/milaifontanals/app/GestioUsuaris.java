@@ -464,6 +464,7 @@ public class GestioUsuaris extends JFrame {
         columnesTaulaProjectes.add("Id");
         columnesTaulaProjectes.add("Nom");
         columnesTaulaProjectes.add("Descripcio");
+        columnesTaulaProjectes.add("Rol");
         
         for (int i = 0; i < columnesTaulaProjectes.size(); i++){
             tProjectesAssignats.addColumn(columnesTaulaProjectes.get(i));
@@ -483,10 +484,11 @@ public class GestioUsuaris extends JFrame {
                 
                 List<Projecte> projectes = cp.getLlistaProjectesAssignats(cp.getUsuari(idUsuari));
                 for (int i = 0; i < projectes.size(); i++) {
-                    Object[] fila = new Object[3];
+                    Object[] fila = new Object[4];
                     fila[0] = projectes.get(i).getId();
                     fila[1] = projectes.get(i).getNom();
                     fila[2] = projectes.get(i).getDescripcio();
+                    fila[3] = cp.getRolAssignat(cp.getUsuari(idUsuari), projectes.get(i)).getNom();
 
                     tProjectesAssignats.addRow(fila);  
                 }
@@ -517,10 +519,6 @@ public class GestioUsuaris extends JFrame {
         }
     }
     
-    
-    
-    
-
     private void omplirFormulari() {
         int fila = taulaUsuaris.getSelectedRow();
         

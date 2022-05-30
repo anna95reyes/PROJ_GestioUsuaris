@@ -23,8 +23,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
@@ -33,6 +35,7 @@ import javax.swing.table.DefaultTableModel;
 import org.milaifontanals.interficie.GestioProjectesException;
 import org.milaifontanals.interficie.IGestioProjectes;
 import org.milaifontanals.model.Projecte;
+import org.milaifontanals.model.Rol;
 import org.milaifontanals.model.Usuari;
 
 /**
@@ -44,6 +47,8 @@ public class AssignarProjectesAUsuari extends JFrame {
     private JPanel panell;
     private JLabel labelFiltre;
     private JTextField textFiltre;
+    private JLabel labelRols;
+    private JComboBox comboRols;
     private JButton buttonBuscarFiltre;
     private JButton buttonGuardar;
     private JButton buttonCancelar;
@@ -60,6 +65,7 @@ public class AssignarProjectesAUsuari extends JFrame {
     private IGestioProjectes cp;
     
     private Integer idUsuari;
+    private Integer idRol;
     private DefaultTableModel tProjectesAssignats;
     
     public AssignarProjectesAUsuari(String titol, IGestioProjectes interficie, Integer usuariSeleccionat, DefaultTableModel taulaProjectesAssignats) {
@@ -74,8 +80,6 @@ public class AssignarProjectesAUsuari extends JFrame {
         //setResizable(false);
         setLocation(10,10);
         setDefaultCloseOperation(JFrame.ABORT);
-        
-        
     }
 
     private void entornGrafic() {
@@ -91,6 +95,23 @@ public class AssignarProjectesAUsuari extends JFrame {
         
         labelFiltre = new JLabel("Nom projecte: ", JLabel.LEFT);
         textFiltre = new JTextField(10);
+        
+        String llistaRols[] = null;
+        try {
+            llistaRols = new String[cp.getLlistaRols().size()];
+            int numRol = 0;
+            for (Rol r: cp.getLlistaRols()) { 
+                llistaRols[numRol] = r.getNom();
+                numRol++;
+            }
+        } catch (GestioProjectesException ex) {
+            
+        }
+        
+        labelRols = new JLabel("Rols: ", JLabel.LEFT);
+        comboRols = new JComboBox(llistaRols);
+        comboRols.setSelectedIndex(-1);
+        comboRols.addActionListener(new GestioComboBox());
         buttonBuscarFiltre = new JButton("Buscar");
         buttonGuardar = new JButton("Guardar");
         buttonCancelar = new JButton("Cancelar");
@@ -110,7 +131,7 @@ public class AssignarProjectesAUsuari extends JFrame {
             public void valueChanged(ListSelectionEvent e) {
                 if (e.getValueIsAdjusting()) // si hi ha canvi de seleccio en el JTable
                 {
-                    if (taulaProjectesNoAssignats.getSelectedRow() > -1){
+                    if (taulaProjectesNoAssignats.getSelectedRow() > -1 && comboRols.getSelectedIndex() > -1){
                         buttonGuardar.setEnabled(true);
                     }
                     
@@ -131,21 +152,29 @@ public class AssignarProjectesAUsuari extends JFrame {
         grid(2, 0, 1, 1, 1, 1);
         panell.add(buttonBuscarFiltre, gbc);
         
+        borderElementsGrid(10, 10, 10, 10);
+        grid(0, 1, 1, 1, 1, 1);
+        panell.add(labelRols, gbc);
+        
+        borderElementsGrid(10, 10, 10, 10);
+        grid(1, 1, 1, 1, 1, 1);
+        panell.add(comboRols, gbc);
+        
         gbc.fill = GridBagConstraints.BOTH;
         borderElementsGrid(10, 10, 10, 10);
-        grid(0, 1, 1, 1, 3, 10);
+        grid(0, 2, 1, 1, 3, 10);
         panell.add(new JScrollPane(taulaProjectesNoAssignats), gbc);
         
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        
         borderElementsGrid(10, 10, 10, 10);
-        grid(0, 2, 1, 1, 1, 1);
+        grid(0, 3, 1, 1, 1, 1);
         panell.add(buttonGuardar, gbc);
         
         borderElementsGrid(10, 10, 10, 10);
-        grid(2, 2, 1, 1, 1, 1);
+        grid(2, 3, 1, 1, 1, 1);
         panell.add(buttonCancelar, gbc);
         setLayout(new BorderLayout());
-        //panell.setBackground(Color.YELLOW);
         add(panell, BorderLayout.CENTER);
     }
     
@@ -197,6 +226,18 @@ public class AssignarProjectesAUsuari extends JFrame {
             }
         }
     }
+
+    class GestioComboBox implements ActionListener {
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            Integer rolSeleccionat = comboRols.getSelectedIndex();
+            idRol = rolSeleccionat + 1;
+            if (taulaProjectesNoAssignats.getSelectedRow() > -1 && comboRols.getSelectedIndex() > -1){
+                buttonGuardar.setEnabled(true);
+            }
+        }
+    }
     
     
     class GestioBotons implements ActionListener { 
@@ -217,7 +258,6 @@ public class AssignarProjectesAUsuari extends JFrame {
                     try {
                         projectes =  cp.getLlistaProjectesNoAssignats(cp.getUsuari(idUsuari));
                     } catch (GestioProjectesException ex) {
-                        Logger.getLogger(AssignarProjectesAUsuari.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     
                     for (int i = 0; i < projectes.size(); i++){
@@ -237,10 +277,10 @@ public class AssignarProjectesAUsuari extends JFrame {
                 
                 
             } else if (botoPremut.equals(buttonGuardar)) {
-                if (taulaProjectesNoAssignats.getSelectedRow() > -1){
+                if (taulaProjectesNoAssignats.getSelectedRow() > -1 && comboRols.getSelectedIndex() > -1){
                     try {
                         int idProjecte = (int)taulaProjectesNoAssignats.getValueAt(taulaProjectesNoAssignats.getSelectedRow(), 0);
-                        cp.assignarProjecte(cp.getUsuari(idUsuari), cp.getProjecte(idProjecte));
+                        cp.assignarProjecte(cp.getUsuari(idUsuari), cp.getProjecte(idProjecte), cp.getRol(idRol));
                         cp.commit();
                         netejarTaulaProjectesNoAssignats();
                         omplirTaulaProjectesNoAssignats();
