@@ -184,7 +184,9 @@ public class GestioUsuaris extends JFrame {
                 if (e.getValueIsAdjusting()) // si hi ha canvi de seleccio en el JTable
                 {
                     if (taulaUsuaris.getSelectedRow() > -1){
-                        canviEstat(Estat.MODIFICACIO_USUARI);
+                        //canviEstat(Estat.MODIFICACIO_USUARI);
+                        buttonEditarUsuari.setEnabled(true);
+                        buttonEsborrarUsuari.setEnabled(true);
                     }
                     omplirFormulari();
                     filaSeleccionada = taulaUsuaris.getSelectedRow();
