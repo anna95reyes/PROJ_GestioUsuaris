@@ -101,7 +101,7 @@ public class GestioUsuaris extends JFrame {
     private GestioBotons gestionador;
     private GridBagConstraints gbc;
     
-    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+    private static SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
     
     private IGestioProjectes cp;
     
@@ -328,7 +328,7 @@ public class GestioUsuaris extends JFrame {
         textUsuariLogin = new JTextField(20);
         textUsuariPassword = new JPasswordField(20);
         
-        TextPrompt placeholder = new TextPrompt("YYYY-MM-DD", textUsuariDataNaix);
+        TextPrompt placeholder = new TextPrompt("DD-MM-YYYY", textUsuariDataNaix);
         placeholder.changeAlpha(0.75f);
         placeholder.changeStyle(Font.ITALIC);
         
